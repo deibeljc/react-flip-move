@@ -219,14 +219,53 @@ export const getNativeNode = (element) => {
 
 export const createTransitionString = (index, props) => {
   let { delay, duration } = props;
-  const { staggerDurationBy, staggerDelayBy, easing } = props;
+  let exponentialAmount = 0;
+  const {
+    staggerDurationBy,
+    staggerDelayBy,
+    easing,
+    exponentialDuration,
+    exponentialDurationToIndex,
+    customDuration
+  } = props;
+  const cssProperties = {
+    transform: {
+      duration: duration
+    },
+    opacity: {
+      duration: duration
+    }
+  };
+
+  // At this point we want to increase the duration factor by
+  // more than what was given but then taper that growth off at
+  // the index specified
+  if (exponentialDuration) {
+    exponentialAmount = exponentialDurationToIndex > index
+                                ? index * 50
+                                : exponentialDurationToIndex * 50;
+  }
+
+  // We want to define a custom duration for each of our cssProperties.
+  // this gives us much more control over the look and feel of
+  // our animation!
+  if (customDuration) {
+    cssProperties.transform.duration = customDuration.transform.duration;
+    cssProperties.opacity.duration = customDuration.opacity.duration;
+  }
+
+  // Apply the stagger to the duration and delay
+  Object.keys(cssProperties).forEach(key => {
+    if (customDuration[key].stagger) {
+      cssProperties[key].duration += index * staggerDurationBy + exponentialAmount;
+    } else {
+      cssProperties[key].duration = customDuration[key].duration;
+    }
+  });
 
   delay += index * staggerDelayBy;
-  duration += index * staggerDurationBy;
 
-  const cssProperties = ['transform', 'opacity'];
-
-  return cssProperties
-    .map(prop => `${prop} ${duration}ms ${easing} ${delay}ms`)
+  return Object.keys(cssProperties)
+    .map(key => `${key} ${cssProperties[key].duration}ms ${easing} ${delay}ms`)
     .join(', ');
 };

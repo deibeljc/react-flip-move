@@ -52,6 +52,7 @@ function propConverter(ComposedComponent) {
       // Do string-to-int conversion for all timing-related props
       const timingPropNames = [
         'duration', 'delay', 'staggerDurationBy', 'staggerDelayBy',
+        'exponentialDurationToIndex'
       ];
 
       timingPropNames.forEach((prop) => {
@@ -161,6 +162,16 @@ function propConverter(ComposedComponent) {
   FlipMovePropConverter.propTypes = {
     children: PropTypes.node,
     easing: PropTypes.string,
+    customDuration: PropTypes.shape({
+      transform: PropTypes.shape({
+        duration: PropTypes.number,
+        stagger: PropTypes.bool
+      }),
+      opacity: PropTypes.shape({
+        duration: PropTypes.number,
+        stagger: PropTypes.bool
+      }),
+    }),
     duration: PropTypes.oneOfType([
       PropTypes.string,
       PropTypes.number,
@@ -174,6 +185,11 @@ function propConverter(ComposedComponent) {
       PropTypes.number,
     ]),
     staggerDelayBy: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.number,
+    ]),
+    exponentialDuration: PropTypes.bool,
+    exponentialDurationToIndex: PropTypes.oneOfType([
       PropTypes.string,
       PropTypes.number,
     ]),

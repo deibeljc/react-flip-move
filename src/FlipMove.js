@@ -312,6 +312,34 @@ class FlipMove extends Component {
     this.bindTransitionEndHandler(child);
   }
 
+  findLongestTransitionProperty(domNode) {
+    const properties = domNode.style.transition && domNode.style.transition.match(/\w+ ([0-9]{1,10})ms/);
+    return properties.reduce((acc, prop) => {
+      const propTime = prop.match(/[0-9]{1,10}/);
+      const propName = prop.match(/\w+/)[0];
+      if (acc.time < propTime) {
+        acc.time = propTime;
+      }
+    }, {prop, time});
+  }
+
+  cleanupTransition(event, domNode) {
+    // Split each style into it's own array for filtering.
+    // TODO: Find a better way to split these apart.
+    let newTransitionStyle = domNode.style.transition.split('ms,');
+    // Add back any missing ms'
+    newTransitionStyle.forEach((property, index, arr) => {
+      if (property.slice(-2) !== 'ms') {
+        arr[index] += 'ms';
+      }
+    });
+    // Filter out the complete event
+    newTransitionStyle = newTransitionStyle.filter(item => {
+      return !item.match(event.propertyName);
+    });
+    return newTransitionStyle.join(',');
+  }
+
   bindTransitionEndHandler(child) {
     const { domNode } = this.childrenData[child.key];
 
@@ -324,13 +352,12 @@ class FlipMove extends Component {
       // but on a nested transition (eg. a hover effect). Ignore these cases.
       if (ev.target !== domNode) return;
 
-      // Remove the 'transition' inline style we added. This is cleanup.
-      domNode.style.transition = '';
-
       // Trigger any applicable onFinish/onFinishAll hooks
       this.triggerFinishHooks(child, domNode);
 
       domNode.removeEventListener(transitionEnd, transitionEndHandler);
+
+      domNode.style.transition = this.cleanupTransition(ev, domNode);
 
       if (child.leaving) {
         delete this.childrenData[child.key];
