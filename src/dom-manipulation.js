@@ -225,7 +225,7 @@ export const createTransitionString = (index, props) => {
     staggerDelayBy,
     easing,
     exponentialDuration,
-    exponentialDurationToIndex,
+    exponentialDurationCap,
     customDuration
   } = props;
   const cssProperties = {
@@ -241,9 +241,8 @@ export const createTransitionString = (index, props) => {
   // more than what was given but then taper that growth off at
   // the index specified
   if (exponentialDuration) {
-    exponentialAmount = exponentialDurationToIndex > index
-                                ? index * 50
-                                : exponentialDurationToIndex * 50;
+    const expDur = index * staggerDurationBy + index * 50;
+    exponentialAmount = expDur < exponentialDurationCap ? expDur : exponentialDurationCap;
   }
 
   // We want to define a custom duration for each of our cssProperties.
@@ -257,7 +256,7 @@ export const createTransitionString = (index, props) => {
   // Apply the stagger to the duration and delay
   Object.keys(cssProperties).forEach(key => {
     if (customDuration[key].stagger) {
-      cssProperties[key].duration += index * staggerDurationBy + exponentialAmount;
+      cssProperties[key].duration += exponentialAmount;
     } else {
       cssProperties[key].duration = customDuration[key].duration;
     }

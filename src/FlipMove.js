@@ -315,29 +315,16 @@ class FlipMove extends Component {
   findLongestTransitionProperty(domNode) {
     const properties = domNode.style.transition && domNode.style.transition.match(/\w+ ([0-9]{1,10})ms/);
     return properties.reduce((acc, prop) => {
-      const propTime = prop.match(/[0-9]{1,10}/);
+      const propTime = prop.match(/[0-9]{1,10}/)[0];
       const propName = prop.match(/\w+/)[0];
       if (acc.time < propTime) {
-        acc.time = propTime;
+        return {
+          prop: propName,
+          time: propTime
+        }
       }
-    }, {prop, time});
-  }
-
-  cleanupTransition(event, domNode) {
-    // Split each style into it's own array for filtering.
-    // TODO: Find a better way to split these apart.
-    let newTransitionStyle = domNode.style.transition.split('ms,');
-    // Add back any missing ms'
-    newTransitionStyle.forEach((property, index, arr) => {
-      if (property.slice(-2) !== 'ms') {
-        arr[index] += 'ms';
-      }
-    });
-    // Filter out the complete event
-    newTransitionStyle = newTransitionStyle.filter(item => {
-      return !item.match(event.propertyName);
-    });
-    return newTransitionStyle.join(',');
+      return acc;
+    }, {prop: '', time: 0});
   }
 
   bindTransitionEndHandler(child) {
@@ -352,12 +339,14 @@ class FlipMove extends Component {
       // but on a nested transition (eg. a hover effect). Ignore these cases.
       if (ev.target !== domNode) return;
 
-      // Trigger any applicable onFinish/onFinishAll hooks
-      this.triggerFinishHooks(child, domNode);
-
-      domNode.removeEventListener(transitionEnd, transitionEndHandler);
-
-      domNode.style.transition = this.cleanupTransition(ev, domNode);
+      // Only trigger the finish hooks once the longest animation ending callback
+      // has been called!
+      if (this.findLongestTransitionProperty(domNode).prop == ev.propertyName) {
+        // Trigger any applicable onFinish/onFinishAll hooks
+        this.triggerFinishHooks(child, domNode);
+        domNode.removeEventListener(transitionEnd, transitionEndHandler);
+        domNode.style.transition = '';
+      }
 
       if (child.leaving) {
         delete this.childrenData[child.key];

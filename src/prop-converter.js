@@ -52,7 +52,7 @@ function propConverter(ComposedComponent) {
       // Do string-to-int conversion for all timing-related props
       const timingPropNames = [
         'duration', 'delay', 'staggerDurationBy', 'staggerDelayBy',
-        'exponentialDurationToIndex'
+        'exponentialDurationCap'
       ];
 
       timingPropNames.forEach((prop) => {
@@ -189,7 +189,7 @@ function propConverter(ComposedComponent) {
       PropTypes.number,
     ]),
     exponentialDuration: PropTypes.bool,
-    exponentialDurationToIndex: PropTypes.oneOfType([
+    exponentialDurationCap: PropTypes.oneOfType([
       PropTypes.string,
       PropTypes.number,
     ]),
