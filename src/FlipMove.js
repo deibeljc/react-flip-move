@@ -314,17 +314,20 @@ class FlipMove extends Component {
 
   findLongestTransitionProperty(domNode) {
     const properties = domNode.style.transition && domNode.style.transition.match(/\w+ ([0-9]{1,10})ms/);
-    return properties.reduce((acc, prop) => {
-      const propTime = prop.match(/[0-9]{1,10}/)[0];
-      const propName = prop.match(/\w+/)[0];
-      if (acc.time < propTime) {
-        return {
-          prop: propName,
-          time: propTime
+    if (properties) {
+      return properties.reduce((acc, prop) => {
+        const propTime = prop.match(/[0-9]{1,10}/)[0];
+        const propName = prop.match(/\w+/)[0];
+        if (acc.time < propTime) {
+          return {
+            prop: propName,
+            time: propTime
+          }
         }
-      }
-      return acc;
-    }, {prop: '', time: 0});
+        return acc;
+      }, {prop: '', time: 0});
+    }
+    return undefined;
   }
 
   bindTransitionEndHandler(child) {
@@ -341,7 +344,8 @@ class FlipMove extends Component {
 
       // Only trigger the finish hooks once the longest animation ending callback
       // has been called!
-      if (this.findLongestTransitionProperty(domNode).prop == ev.propertyName) {
+      const longestProp = this.findLongestTransitionProperty(domNode);
+      if (longestProp && longestProp.prop === ev.propertyName) {
         // Trigger any applicable onFinish/onFinishAll hooks
         this.triggerFinishHooks(child, domNode);
         domNode.removeEventListener(transitionEnd, transitionEndHandler);
